@@ -7,29 +7,53 @@
 //   background service worker using chrome.runtime.sendMessage.
 // - It uses a very small, isolated overlay to avoid interfering with Salesforce's UI.
 
-(function () {
-    if (window.__sfInspectorInjected) return;
-    window.__sfInspectorInjected = true;
+console.log('🚀 SF Loader: Content script loaded!', window.location.href);
 
-    // create floating button
+(function () {
+    if (window.__sfInspectorInjected) {
+        console.log('SF Loader: Already injected, skipping');
+        return;
+    }
+    window.__sfInspectorInjected = true;
+    console.log('SF Loader: Initializing...');
+
+    // create floating button with rocket icon
     const btn = document.createElement('button');
     btn.id = 'sf-inspector-btn';
-    btn.textContent = 'SF Loader';
+    btn.innerHTML = '🚀';
     Object.assign(btn.style, {
         position: 'fixed',
-        right: '12px',
-        bottom: '12px',
+        right: '20px',
+        bottom: '20px',
         zIndex: 2147483647,
-        padding: '10px 14px',
-        borderRadius: '10px',
+        width: '60px',
+        height: '60px',
+        borderRadius: '50%',
         border: 'none',
-        boxShadow: '0 6px 18px rgba(0,0,0,0.18)',
-        background: '#0A66C2',
+        boxShadow: '0 4px 12px rgba(0, 166, 194, 0.4), 0 2px 6px rgba(0, 0, 0, 0.2)',
+        background: 'linear-gradient(135deg, #00A1E0 0%, #0070D2 100%)',
         color: '#fff',
         cursor: 'pointer',
-        fontSize: '13px',
+        fontSize: '28px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        transition: 'all 0.3s ease',
+        fontFamily: 'Arial, sans-serif',
+        outline: 'none'
     });
-    btn.title = 'Open SF Loader';
+    btn.title = 'SF Loader - Click to inspect';
+
+    // Add hover effect
+    btn.addEventListener('mouseenter', () => {
+        btn.style.transform = 'scale(1.1) translateY(-2px)';
+        btn.style.boxShadow = '0 6px 20px rgba(0, 166, 194, 0.6), 0 4px 10px rgba(0, 0, 0, 0.3)';
+    });
+
+    btn.addEventListener('mouseleave', () => {
+        btn.style.transform = 'scale(1) translateY(0)';
+        btn.style.boxShadow = '0 4px 12px rgba(0, 166, 194, 0.4), 0 2px 6px rgba(0, 0, 0, 0.2)';
+    });
 
     document.body.appendChild(btn);
     btn.addEventListener('click', openOverlay);
@@ -196,116 +220,69 @@
         return m ? m[1] : null;
     }
 
-    // Extract session ID from page context (like Salesforce Inspector does)
-    function extractSessionId() {
-        // Try multiple methods to get session ID
-
-        // Method 1: From global variables (Lightning/Classic)
-        try {
-            // Lightning Experience - primary method
-            if (window.$Api && window.$Api.getClient) {
-                const sessionId = window.$Api.getClient().getSessionId();
-                if (sessionId) return sessionId;
-            }
-        } catch (e) { /* ignore */ }
-
-        try {
-            // Classic UI
-            if (window.sforce && window.sforce.connection && window.sforce.connection.sessionId) {
-                return window.sforce.connection.sessionId;
-            }
-        } catch (e) { /* ignore */ }
-
-        try {
-            // Visualforce pages
-            if (window.UserContext && window.UserContext.sessionId) {
-                return window.UserContext.sessionId;
-            }
-        } catch (e) { /* ignore */ }
-
-        try {
-            // Another Lightning method
-            if (window.Sfdc && window.Sfdc.canvas && window.Sfdc.canvas.client) {
-                const token = window.Sfdc.canvas.client.token();
-                if (token) return token;
-            }
-        } catch (e) { /* ignore */ }
-
-        try {
-            // Check for session in window.__NEXT_DATA__ (some SF pages)
-            if (window.__NEXT_DATA__ && window.__NEXT_DATA__.props) {
-                const props = JSON.stringify(window.__NEXT_DATA__.props);
-                const match = props.match(/"sessionId":"([^"]+)"/);
-                if (match && match[1]) return match[1];
-            }
-        } catch (e) { /* ignore */ }
-
-        try {
-            // Check for aura framework token
-            if (window.Aura && window.Aura.getToken) {
-                const token = window.Aura.getToken();
-                if (token) return token;
-            }
-        } catch (e) { /* ignore */ }
-
-        try {
-            // Check for session in meta tags
-            const metaSession = document.querySelector('meta[name="salesforce-session"]');
-            if (metaSession && metaSession.content) {
-                return metaSession.content;
-            }
-        } catch (e) { /* ignore */ }
-
-        return null;
-    }
-
     // Send session info to storage when detected
     function saveSession(sessionId) {
+        console.log('SF Loader: saveSession called with:', sessionId ? `${sessionId.substring(0, 10)}...` : 'null');
+
         if (sessionId && sessionId.length > 10) {
             const instanceUrl = window.location.origin;
+            console.log('SF Loader: Saving session to storage...');
+            console.log('SF Loader: Instance URL:', instanceUrl);
+            console.log('SF Loader: Session ID length:', sessionId.length);
+
             chrome.storage.local.set({
                 sessionId: sessionId,
                 instanceUrl: instanceUrl,
                 sessionDetectedAt: Date.now()
+            }, () => {
+                if (chrome.runtime.lastError) {
+                    console.error('SF Loader: ✗ Failed to save session:', chrome.runtime.lastError);
+                } else {
+                    console.log('SF Loader: ✓ Session saved successfully!');
+                }
             });
-            console.log('SF Loader: Session detected and saved automatically ✓');
             return true;
         }
+        console.log('SF Loader: ✗ Session ID invalid or too short');
         return false;
     }
 
-    // Detect and send session info - with retry logic
-    (function detectAndSendSession() {
-        let attempts = 0;
-        const maxAttempts = 10;
-        const retryInterval = 1000; // 1 second
+    // Inject the main world script to access global variables
+    function injectMainScript() {
+        const script = document.createElement('script');
+        script.src = chrome.runtime.getURL('inject.js');
+        script.onload = function () {
+            this.remove();
+        };
+        (document.head || document.documentElement).appendChild(script);
+        console.log('SF Loader: Injected main world script');
+    }
 
-        function tryDetect() {
-            const sessionId = extractSessionId();
-            if (saveSession(sessionId)) {
-                console.log('SF Loader: Auto-detection successful');
-                return; // Success, stop trying
-            }
+    // Listen for session ID from the injected script
+    window.addEventListener('message', function (event) {
+        // We only accept messages from ourselves
+        if (event.source !== window) return;
 
-            attempts++;
-            if (attempts < maxAttempts) {
-                // Retry after delay
-                setTimeout(tryDetect, retryInterval);
-            } else {
-                console.log('SF Loader: Auto-detection failed after', maxAttempts, 'attempts');
-            }
+        if (event.data.type && event.data.type === 'SF_LOADER_SESSION') {
+            const sessionId = event.data.sessionId;
+            console.log('SF Loader: Received session ID from main world');
+            saveSession(sessionId);
         }
+    });
 
-        // Start detection immediately
-        tryDetect();
+    // Start detection by injecting the script
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', injectMainScript);
+    } else {
+        injectMainScript();
+    }
 
-        // Also listen for page changes (SPA navigation)
-        if (window.addEventListener) {
-            window.addEventListener('popstate', () => {
-                const sessionId = extractSessionId();
-                saveSession(sessionId);
-            });
-        }
-    })();
+    // Re-inject on navigation (SPA)
+    if (window.addEventListener) {
+        window.addEventListener('popstate', () => {
+            console.log('SF Loader: Navigation detected, re-injecting script...');
+            injectMainScript();
+        });
+    }
 
 })();

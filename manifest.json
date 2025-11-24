@@ -35,7 +35,11 @@
         {
             "matches": [
                 "https://*.salesforce.com/*",
-                "https://*.my.salesforce.com/*"
+                "https://*.my.salesforce.com/*",
+                "https://*.force.com/*",
+                "https://*.lightning.force.com/*",
+                "https://login.salesforce.com/*",
+                "https://test.salesforce.com/*"
             ],
             "js": [
                 "content-script.js"
@@ -47,11 +51,14 @@
     "web_accessible_resources": [
         {
             "resources": [
-                "assets/styles.css"
+                "assets/styles.css",
+                "inject.js"
             ],
             "matches": [
                 "https://*.salesforce.com/*",
-                "https://*.my.salesforce.com/*"
+                "https://*.my.salesforce.com/*",
+                "https://*.force.com/*",
+                "https://*.lightning.force.com/*"
             ]
         }
     ]

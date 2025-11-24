@@ -88,17 +88,38 @@ authorizeBtn.addEventListener('click', async () => {
 
         if (salesforceTabs.length === 0) {
             // No Salesforce tab found - open one
-            alert('No Salesforce tab detected. Opening Salesforce login page...');
+            authorizeBtn.textContent = 'Opening Salesforce Login...';
+
             const newTab = await chrome.tabs.create({
                 url: 'https://login.salesforce.com',
                 active: true
             });
 
             // Wait for user to log in, then check again
-            authorizeBtn.textContent = 'Waiting for Salesforce Login...';
+            authorizeBtn.textContent = 'Waiting for Login... (Please log in to Salesforce)';
+
+            let attempts = 0;
+            const maxAttempts = 150; // 5 minutes (150 * 2 seconds)
 
             // Poll for session detection
             const pollInterval = setInterval(async () => {
+                attempts++;
+
+                // Try to inject content script into the tab to force detection
+                try {
+                    const currentTab = await chrome.tabs.get(newTab.id);
+                    if (currentTab.url && currentTab.url.includes('salesforce.com')) {
+                        // Inject content script to force session detection
+                        await chrome.scripting.executeScript({
+                            target: { tabId: newTab.id },
+                            files: ['content-script.js']
+                        });
+                    }
+                } catch (e) {
+                    // Tab might be closed or script already injected
+                }
+
+                // Check if session was detected
                 const data = await chrome.storage.local.get(['sessionId', 'instanceUrl', 'sessionDetectedAt']);
                 const twoHours = 2 * 60 * 60 * 1000;
                 const isRecent = data.sessionDetectedAt && (Date.now() - data.sessionDetectedAt) < twoHours;
@@ -108,32 +129,43 @@ authorizeBtn.addEventListener('click', async () => {
                     currentToken = data.sessionId;
                     currentInstance = data.instanceUrl;
                     showQueryInterface('Auto-detected');
+
+                    // Close the login tab
+                    try {
+                        await chrome.tabs.remove(newTab.id);
+                    } catch (e) { /* Tab might already be closed */ }
+                }
+
+                // Update button text with countdown
+                const remainingSeconds = Math.floor((maxAttempts - attempts) * 2);
+                authorizeBtn.textContent = `Waiting for Login... (${remainingSeconds}s remaining)`;
+
+                // Stop after max attempts
+                if (attempts >= maxAttempts) {
+                    clearInterval(pollInterval);
+                    authorizeBtn.disabled = false;
+                    authorizeBtn.textContent = 'Authorize & Connect to Salesforce';
+                    alert('Login timeout. Please try again or check if you logged in successfully.');
                 }
             }, 2000);
-
-            // Stop polling after 5 minutes
-            setTimeout(() => {
-                clearInterval(pollInterval);
-                authorizeBtn.disabled = false;
-                authorizeBtn.textContent = 'Authorize & Connect to Salesforce';
-            }, 5 * 60 * 1000);
 
         } else {
             // Salesforce tab found - try to get session from it
             const sfTab = salesforceTabs[0];
 
-            // Inject content script if not already injected
+            // Inject content script to force session detection
             try {
                 await chrome.scripting.executeScript({
                     target: { tabId: sfTab.id },
                     files: ['content-script.js']
                 });
             } catch (e) {
-                // Already injected or error
+                console.log('Content script injection:', e.message);
             }
 
             // Wait a moment for session detection
-            await new Promise(resolve => setTimeout(resolve, 2000));
+            authorizeBtn.textContent = 'Detecting session...';
+            await new Promise(resolve => setTimeout(resolve, 3000));
 
             // Check if session was detected
             const data = await chrome.storage.local.get(['sessionId', 'instanceUrl', 'sessionDetectedAt']);
@@ -145,10 +177,24 @@ authorizeBtn.addEventListener('click', async () => {
                 currentInstance = data.instanceUrl;
                 showQueryInterface('Auto-detected');
             } else {
-                // Session not detected - show manual option
-                alert('Could not auto-detect session. Please refresh your Salesforce page and try again, or enter a token manually.');
-                authorizeBtn.disabled = false;
-                authorizeBtn.textContent = 'Authorize & Connect to Salesforce';
+                // Session not detected - try to refresh the tab and retry
+                authorizeBtn.textContent = 'Refreshing page...';
+                await chrome.tabs.reload(sfTab.id);
+                await new Promise(resolve => setTimeout(resolve, 3000));
+
+                // Check again after refresh
+                const retryData = await chrome.storage.local.get(['sessionId', 'instanceUrl', 'sessionDetectedAt']);
+                const retryIsRecent = retryData.sessionDetectedAt && (Date.now() - retryData.sessionDetectedAt) < twoHours;
+
+                if (retryData.sessionId && retryData.instanceUrl && retryIsRecent) {
+                    currentToken = retryData.sessionId;
+                    currentInstance = retryData.instanceUrl;
+                    showQueryInterface('Auto-detected');
+                } else {
+                    alert('Could not auto-detect session. Please make sure you are logged into Salesforce and try again.');
+                    authorizeBtn.disabled = false;
+                    authorizeBtn.textContent = 'Authorize & Connect to Salesforce';
+                }
             }
         }
     } catch (error) {
