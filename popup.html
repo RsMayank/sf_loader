@@ -1,0 +1,30 @@
+<!-- popup.html -->
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <title>Salesforce Inspector — SOQL</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <link rel="stylesheet" href="assets/styles.css" />
+</head>
+
+<body>
+    <div class="popup-root">
+        <h3>Salesforce Inspector</h3>
+
+        <label for="soql">SOQL (example: <code>SELECT Id, Name FROM Account LIMIT 10</code>)</label>
+        <textarea id="soql" placeholder="Write your SOQL here"
+            spellcheck="false">SELECT Id, Name FROM Account LIMIT 10</textarea>
+        <div class="popup-actions">
+            <button id="run-soql" class="inspector-btn">Run</button>
+            <button id="export-csv" class="inspector-btn">Export CSV</button>
+        </div>
+
+        <div id="results" class="results"></div>
+    </div>
+
+    <script src="popup.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,138 @@
+/* assets/styles.css - minimal styles for overlay/popup/results */
+
+/* overlay */
+#sf-inspector-overlay {
+    position: fixed;
+    right: 18px;
+    bottom: 80px;
+    width: 420px;
+    max-height: 65vh;
+    overflow: auto;
+    z-index: 2147483647;
+    background: #ffffff;
+    border: 1px solid #dcdcdc;
+    border-radius: 10px;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+    font-family: Arial, sans-serif;
+    color: #222;
+    font-size: 13px;
+}
+
+.inspector-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.inspector-body {
+    padding: 10px 12px;
+}
+
+.inspector-footer {
+    padding: 8px 12px;
+    border-top: 1px solid #f0f0f0;
+    text-align: right;
+}
+
+.inspector-btn {
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: none;
+    background: #0A66C2;
+    color: #fff;
+    cursor: pointer;
+    font-size: 13px;
+}
+
+.inspector-small-btn {
+    padding: 6px 8px;
+    margin-left: 6px;
+    border-radius: 6px;
+    border: none;
+    background: #eef6ff;
+    color: #0A66C2;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.field-row {
+    margin-bottom: 6px;
+}
+
+.record-json pre {
+    background: #f7f7f7;
+    padding: 8px;
+    border-radius: 6px;
+    overflow: auto;
+    max-height: 160px;
+}
+
+/* popup */
+.popup-root {
+    width: 380px;
+    padding: 12px;
+    font-family: Arial, sans-serif;
+}
+
+.popup-root h3 {
+    margin: 0 0 8px 0;
+    font-size: 16px;
+}
+
+textarea {
+    width: 100%;
+    height: 120px;
+    padding: 8px;
+    font-family: monospace;
+    font-size: 13px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    box-sizing: border-box;
+}
+
+.popup-actions {
+    margin-top: 8px;
+    text-align: right;
+}
+
+.results {
+    margin-top: 12px;
+    max-height: 50vh;
+    overflow: auto;
+}
+
+/* table */
+.results-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.results-table th,
+.results-table td {
+    border: 1px solid #e8e8e8;
+    padding: 6px 8px;
+    text-align: left;
+    vertical-align: top;
+}
+
+.results-table th {
+    background: #fafafa;
+    font-weight: 600;
+}
+
+/* helper */
+.muted {
+    color: #666;
+    font-size: 13px;
+    padding: 6px 0;
+}
+
+.error {
+    color: #a94442;
+    background: #f9eaea;
+    padding: 6px;
+    border-radius: 6px;
+}
