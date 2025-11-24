@@ -30,6 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
             currentToken = data.sessionId;
             currentInstance = data.instanceUrl;
             updateStatus(true, 'Auto-detected');
+            generateTokenBtn.style.display = 'none'; // Hide the button when auto-detected
             resultsEl.innerHTML = '<div class="muted">✓ Session auto-detected from Salesforce page. Ready to run SOQL queries.</div>';
         } else if (data.accessToken && data.instanceUrl) {
             // Fallback to manually entered token
@@ -41,6 +42,22 @@ document.addEventListener('DOMContentLoaded', () => {
             updateStatus(false);
             resultsEl.innerHTML = '<div class="muted">Please navigate to a Salesforce page, or click "Generate Token" to enter manually.</div>';
         }
+
+        // Periodically check for auto-detected session (every 2 seconds)
+        setInterval(async () => {
+            const newData = await chrome.storage.local.get(['sessionId', 'instanceUrl', 'sessionDetectedAt']);
+            const newIsRecent = newData.sessionDetectedAt && (Date.now() - newData.sessionDetectedAt) < twoHours;
+
+            // If we just got a new auto-detected session and we're not already connected
+            if (newData.sessionId && newData.instanceUrl && newIsRecent && !currentToken) {
+                currentToken = newData.sessionId;
+                currentInstance = newData.instanceUrl;
+                updateStatus(true, 'Auto-detected');
+                generateTokenBtn.style.display = 'none';
+                tokenSection.style.display = 'none';
+                resultsEl.innerHTML = '<div class="muted">✓ Session auto-detected! Ready to run SOQL queries.</div>';
+            }
+        }, 2000);
     })();
 
     // Update connection status

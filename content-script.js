@@ -202,7 +202,7 @@
 
         // Method 1: From global variables (Lightning/Classic)
         try {
-            // Lightning Experience
+            // Lightning Experience - primary method
             if (window.$Api && window.$Api.getClient) {
                 const sessionId = window.$Api.getClient().getSessionId();
                 if (sessionId) return sessionId;
@@ -231,21 +231,80 @@
             }
         } catch (e) { /* ignore */ }
 
+        try {
+            // Check for session in window.__NEXT_DATA__ (some SF pages)
+            if (window.__NEXT_DATA__ && window.__NEXT_DATA__.props) {
+                const props = JSON.stringify(window.__NEXT_DATA__.props);
+                const match = props.match(/"sessionId":"([^"]+)"/);
+                if (match && match[1]) return match[1];
+            }
+        } catch (e) { /* ignore */ }
+
+        try {
+            // Check for aura framework token
+            if (window.Aura && window.Aura.getToken) {
+                const token = window.Aura.getToken();
+                if (token) return token;
+            }
+        } catch (e) { /* ignore */ }
+
+        try {
+            // Check for session in meta tags
+            const metaSession = document.querySelector('meta[name="salesforce-session"]');
+            if (metaSession && metaSession.content) {
+                return metaSession.content;
+            }
+        } catch (e) { /* ignore */ }
+
         return null;
     }
 
-    // Send session info to background when page loads
-    (function detectAndSendSession() {
-        const sessionId = extractSessionId();
-        if (sessionId) {
+    // Send session info to storage when detected
+    function saveSession(sessionId) {
+        if (sessionId && sessionId.length > 10) {
             const instanceUrl = window.location.origin;
-            // Store session info
             chrome.storage.local.set({
                 sessionId: sessionId,
                 instanceUrl: instanceUrl,
                 sessionDetectedAt: Date.now()
             });
-            console.log('SF Loader: Session detected and saved');
+            console.log('SF Loader: Session detected and saved automatically ✓');
+            return true;
+        }
+        return false;
+    }
+
+    // Detect and send session info - with retry logic
+    (function detectAndSendSession() {
+        let attempts = 0;
+        const maxAttempts = 10;
+        const retryInterval = 1000; // 1 second
+
+        function tryDetect() {
+            const sessionId = extractSessionId();
+            if (saveSession(sessionId)) {
+                console.log('SF Loader: Auto-detection successful');
+                return; // Success, stop trying
+            }
+
+            attempts++;
+            if (attempts < maxAttempts) {
+                // Retry after delay
+                setTimeout(tryDetect, retryInterval);
+            } else {
+                console.log('SF Loader: Auto-detection failed after', maxAttempts, 'attempts');
+            }
+        }
+
+        // Start detection immediately
+        tryDetect();
+
+        // Also listen for page changes (SPA navigation)
+        if (window.addEventListener) {
+            window.addEventListener('popstate', () => {
+                const sessionId = extractSessionId();
+                saveSession(sessionId);
+            });
         }
     })();
 
