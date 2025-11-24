@@ -1,4 +1,4 @@
-// background.js (additions)
+// background.js - Updated to use Bearer token authentication
 
 // ephemeral per-tab map (in memory). Keys: tabId or origin; values: metadata cache
 const tabState = {};
@@ -11,6 +11,23 @@ chrome.tabs.onRemoved.addListener((tabId, removeInfo) => {
     }
 });
 
+// Helper function to get session token from storage
+async function getSessionToken() {
+    const data = await chrome.storage.local.get(['sessionId', 'accessToken', 'sessionDetectedAt']);
+
+    // Prefer auto-detected session if recent (within 2 hours)
+    const twoHours = 2 * 60 * 60 * 1000;
+    const isRecentSession = data.sessionDetectedAt && (Date.now() - data.sessionDetectedAt) < twoHours;
+
+    if (data.sessionId && isRecentSession) {
+        return data.sessionId;
+    } else if (data.accessToken) {
+        return data.accessToken;
+    }
+
+    return null;
+}
+
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     if (!msg || !msg.type) {
         sendResponse({ ok: false, err: 'invalid_message' });
@@ -20,11 +37,21 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     if (msg.type === 'SOQL_QUERY') {
         (async () => {
             try {
+                // Get session token
+                const token = await getSessionToken();
+                if (!token) {
+                    sendResponse({ ok: false, err: 'No session token found. Please navigate to a Salesforce page or authorize manually.' });
+                    return;
+                }
+
                 // Prefer supplied origin; fallback to sender.tab.url origin
                 let origin = msg.origin;
                 if (!origin) {
                     const tabUrl = sender && sender.tab && sender.tab.url;
-                    if (!tabUrl) { sendResponse({ ok: false, err: 'no_tab_or_origin' }); return; }
+                    if (!tabUrl) {
+                        sendResponse({ ok: false, err: 'no_tab_or_origin' });
+                        return;
+                    }
                     origin = (new URL(tabUrl)).origin;
                 }
 
@@ -32,7 +59,15 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
                 const q = encodeURIComponent(msg.query);
                 const url = `${origin}/services/data/${apiVersion}/query?q=${q}`;
 
-                const res = await fetch(url, { credentials: 'include', headers: { 'Accept': 'application/json' } });
+                // Use Bearer token authentication instead of credentials: 'include'
+                const res = await fetch(url, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
+                });
+
                 if (!res.ok) {
                     const text = await res.text();
                     sendResponse({ ok: false, err: `HTTP ${res.status}: ${text}` });
@@ -58,18 +93,40 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     if (msg.type === 'DESCRIBE') {
         (async () => {
             try {
+                // Get session token
+                const token = await getSessionToken();
+                if (!token) {
+                    sendResponse({ ok: false, err: 'No session token found. Please navigate to a Salesforce page or authorize manually.' });
+                    return;
+                }
+
                 let origin = msg.origin;
                 if (!origin) {
                     const tabUrl = sender && sender.tab && sender.tab.url;
-                    if (!tabUrl) { sendResponse({ ok: false, err: 'no_tab_or_origin' }); return; }
+                    if (!tabUrl) {
+                        sendResponse({ ok: false, err: 'no_tab_or_origin' });
+                        return;
+                    }
                     origin = (new URL(tabUrl)).origin;
                 }
                 const apiVersion = msg.apiVersion || 'v62.0';
                 const obj = msg.objectName;
-                if (!obj) { sendResponse({ ok: false, err: 'no_object' }); return; }
+                if (!obj) {
+                    sendResponse({ ok: false, err: 'no_object' });
+                    return;
+                }
 
                 const url = `${origin}/services/data/${apiVersion}/sobjects/${encodeURIComponent(obj)}/describe`;
-                const res = await fetch(url, { credentials: 'include', headers: { 'Accept': 'application/json' } });
+
+                // Use Bearer token authentication instead of credentials: 'include'
+                const res = await fetch(url, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
+                });
+
                 if (!res.ok) {
                     const text = await res.text();
                     sendResponse({ ok: false, err: `HTTP ${res.status}: ${text}` });
