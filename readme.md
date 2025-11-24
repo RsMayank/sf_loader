@@ -39,20 +39,14 @@ A powerful Chrome/Edge extension for Salesforce developers and admins. Inspect r
 
 ### Usage
 
-#### Option 1: Automatic (Recommended) ✅
-1. **Navigate to any Salesforce page** while logged in
-2. **Open the SF Loader popup** (click extension icon)
-3. **You're ready!** The session is auto-detected
-4. Run SOQL queries immediately
+1. **Click the SF Loader extension icon** in your browser toolbar
+2. **Click "Open SOQL Inspector"** to open the full interface in a new tab
+3. **Click "Authorize & Connect to Salesforce"** 
+   - If you have a Salesforce tab open: Session is detected automatically!
+   - If not: Salesforce login page opens → Log in → Session detected automatically
+4. **Start querying!** Enter SOQL queries and export results to CSV
 
-#### Option 2: Manual Token Entry
-If auto-detection doesn't work:
-1. Click "Generate Token" in the popup
-2. Follow the instructions to get a session ID
-3. Enter your Instance URL and Access Token
-4. Click "Save Token"
-
-See [Auto Session Detection Guide](./docs/auto-session-detection.md) for details.
+See [Inspector Interface Guide](./docs/inspector-interface-guide.md) for detailed usage.
 
 ## 📁 Project Structure
 
@@ -63,15 +57,18 @@ sf_loader/
 ├── icons/                 # Extension icons
 ├── background.js          # Service worker (handles API requests)
 ├── content-script.js      # Injects inspector button, auto-detects session
-├── popup.html             # SOQL editor UI
-├── popup.js               # SOQL editor logic + CSV export
+├── popup.html             # Small popup UI
+├── popup.js               # Opens inspector in new tab
+├── inspector.html         # Full-page SOQL inspector interface
+├── inspector.js           # Inspector logic (authorization, queries, export)
 ├── options.html           # Settings page
 ├── options.js             # Settings logic
 ├── assets/
 │   └── styles.css         # Styling for inspector overlay
 └── docs/
-    ├── auto-session-detection.md  # Auto-detection guide
-    └── oauth-setup-guide.md       # Manual token setup guide
+    ├── auto-session-detection.md    # Auto-detection guide
+    ├── inspector-interface-guide.md # Full inspector guide
+    └── oauth-setup-guide.md         # Manual token setup guide
 ```
 
 ## 🛠️ Requirements

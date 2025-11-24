@@ -1,122 +1,126 @@
-<!-- popup.html -->
-<!doctype html>
-<html>
+<!DOCTYPE html>
+<html lang="en">
 
 <head>
-    <meta charset="utf-8" />
-    <title>SF Loader — SOQL</title>
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <link rel="stylesheet" href="assets/styles.css" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SF Loader</title>
     <style>
-        .auth-section {
-            padding: 12px;
-            background: #f0f8ff;
-            border: 1px solid #0A66C2;
-            border-radius: 6px;
-            margin-bottom: 15px;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
-        .auth-status {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
+        body {
+            width: 320px;
+            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         }
 
-        .status-indicator {
+        .container {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            font-size: 20px;
+            color: #2d3748;
+            margin-bottom: 8px;
+        }
+
+        .status {
             display: flex;
             align-items: center;
+            justify-content: center;
             gap: 8px;
+            padding: 8px 12px;
+            background: #f7fafc;
+            border-radius: 6px;
+            margin-bottom: 20px;
         }
 
         .status-dot {
-            width: 10px;
-            height: 10px;
+            width: 8px;
+            height: 8px;
             border-radius: 50%;
+            background: #fc8181;
         }
 
         .status-dot.connected {
-            background: #28a745;
+            background: #48bb78;
         }
 
-        .status-dot.disconnected {
-            background: #dc3545;
-        }
-
-        .token-input {
-            width: 100%;
-            padding: 8px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            font-family: monospace;
-            font-size: 12px;
-            margin-top: 8px;
-            box-sizing: border-box;
-        }
-
-        .instance-input {
-            width: 100%;
-            padding: 8px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
+        .status-text {
             font-size: 13px;
-            margin-top: 8px;
-            box-sizing: border-box;
+            color: #4a5568;
+            font-weight: 500;
         }
 
-        .help-link {
-            font-size: 11px;
-            color: #0A66C2;
-            text-decoration: none;
-            margin-top: 8px;
-            display: inline-block;
+        .main-btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
         }
 
-        .help-link:hover {
-            text-decoration: underline;
+        .main-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .info {
+            margin-top: 16px;
+            padding: 12px;
+            background: #f7fafc;
+            border-radius: 6px;
+            font-size: 12px;
+            color: #718096;
+            line-height: 1.5;
+        }
+
+        .info strong {
+            color: #2d3748;
+            display: block;
+            margin-bottom: 4px;
         }
     </style>
 </head>
 
 <body>
-    <div class="popup-root">
-        <h3>SF Loader</h3>
-
-        <!-- Authentication Section -->
-        <div class="auth-section">
-            <div class="auth-status">
-                <div class="status-indicator">
-                    <div class="status-dot disconnected" id="status-dot"></div>
-                    <span id="status-text">Not Connected</span>
-                </div>
-                <button id="generate-token-btn" class="inspector-btn" style="font-size: 12px; padding: 6px 12px;">
-                    Generate Token
-                </button>
-            </div>
-            <div id="token-section" style="display: none;">
-                <label for="instance-url" style="font-size: 12px; font-weight: 600;">Instance URL:</label>
-                <input type="text" id="instance-url" class="instance-input"
-                    placeholder="https://yourinstance.salesforce.com">
-                <label for="access-token"
-                    style="font-size: 12px; font-weight: 600; margin-top: 8px; display: block;">Access Token:</label>
-                <input type="password" id="access-token" class="token-input" placeholder="Paste your access token here">
-                <button id="save-token-btn" class="inspector-btn"
-                    style="margin-top: 8px; font-size: 12px; padding: 6px 12px;">
-                    Save Token
-                </button>
-                <a href="#" id="show-instructions" class="help-link">How to get an access token?</a>
-            </div>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 SF Loader</h1>
         </div>
 
-        <label for="soql">SOQL (example: <code>SELECT Id, Name FROM Account LIMIT 10</code>)</label>
-        <textarea id="soql" placeholder="Write your SOQL here"
-            spellcheck="false">SELECT Id, Name FROM Account LIMIT 10</textarea>
-        <div class="popup-actions">
-            <button id="run-soql" class="inspector-btn">Run</button>
-            <button id="export-csv" class="inspector-btn">Export CSV</button>
+        <div class="status">
+            <div class="status-dot" id="status-dot"></div>
+            <span class="status-text" id="status-text">Checking...</span>
         </div>
 
-        <div id="results" class="results"></div>
+        <button class="main-btn" id="open-inspector">
+            Open SOQL Inspector
+        </button>
+
+        <div class="info">
+            <strong>How it works:</strong>
+            Click the button above to open the full SOQL Inspector interface. If you're logged into Salesforce, your
+            session will be automatically detected!
+        </div>
     </div>
 
     <script src="popup.js"></script>
