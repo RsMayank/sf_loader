@@ -181,7 +181,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return s ? s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') : '';
     }
 
-    // --- Initialization flow: detect tab + request permission + auto-describe ---
+    // --- Initialization flow: detect tab + auto-describe ---
     (async function init() {
         resultsEl.innerHTML = '<div class="muted">Preparing...</div>';
         const tab = await getActiveTab();
@@ -190,28 +190,14 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        const origin = new URL(tab.url).origin;
-        currentOrigin = origin;
-
-        // request permission for this origin (will prompt user)
-        const granted = await requestHostPermission(origin);
-        if (!granted) {
-            resultsEl.innerHTML = `
-                <div class="error">
-                    <strong>Permission Required</strong><br>
-                    This extension needs permission to access <code>${escapeHtml(origin)}</code>.<br>
-                    <button id="retry-permission" class="inspector-btn" style="margin-top:8px">Grant Permission</button>
-                </div>`;
-            document.getElementById('retry-permission').addEventListener('click', async () => {
-                const retryGranted = await requestHostPermission(origin);
-                if (retryGranted) {
-                    location.reload(); // Reload popup to reinitialize
-                } else {
-                    resultsEl.innerHTML = '<div class="error">Permission denied. Please enable permissions in chrome://extensions/</div>';
-                }
-            });
+        // Check if we're on a Salesforce page
+        if (!tab.url.includes('salesforce.com') && !tab.url.includes('force.com')) {
+            resultsEl.innerHTML = '<div class="muted">Please navigate to a Salesforce page to use this extension.</div>';
             return;
         }
+
+        const origin = new URL(tab.url).origin;
+        currentOrigin = origin;
 
         // detect object
         const obj = detectObjectFromUrl(tab.url);
@@ -233,7 +219,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
         } else {
-            resultsEl.innerHTML = '<div class="muted">Could not auto-detect object from URL; you can still run SOQL manually.</div>';
+            resultsEl.innerHTML = '<div class="muted">Ready to run SOQL queries. Enter your query above and click Run.</div>';
         }
     })();
 
