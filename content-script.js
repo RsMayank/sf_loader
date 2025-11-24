@@ -100,14 +100,56 @@
 
         body.innerHTML = `<div>RecordId: <code>${recordId}</code></div><div id="record-fields" style="margin-top:8px">Loading...</div>`;
 
-        // Compose a small SOQL to fetch fields — adjust object mapping if needed
-        // Heuristic: if record starts with '001' treat as Account, '003' Contact, else generic SObject describe is required.
-        const prefix = recordId.substring(0, 3);
-        let obj = 'SObject';
-        if (prefix === '001') obj = 'Account';
-        else if (prefix === '003') obj = 'Contact';
-        // Basic fields to show; you can expand
-        const fields = obj === 'Account' ? ['Id', 'Name', 'Industry', 'Website'] : ['Id', 'Name', 'Email'];
+        // Try to detect object from Lightning URL first
+        let obj = detectLightningObjectName(location.href);
+
+        // Fallback to ID prefix mapping if Lightning detection fails
+        if (!obj) {
+            const prefix = recordId.substring(0, 3);
+            const prefixMap = {
+                '001': 'Account',
+                '003': 'Contact',
+                '005': 'User',
+                '006': 'Opportunity',
+                '00Q': 'Lead',
+                '500': 'Case',
+                '800': 'Contract',
+                '701': 'Campaign',
+                '00G': 'Group',
+                '00D': 'Organization',
+                '00E': 'Profile',
+                '00e': 'PermissionSet',
+                '012': 'RecordType',
+                '01I': 'Task',
+                '00U': 'Event',
+                '00T': 'Event',
+                '002': 'Note',
+                '00O': 'Report',
+                '00l': 'Folder',
+                '01Z': 'Dashboard',
+                '00N': 'CustomField',
+                '01p': 'Pricebook2',
+                '01u': 'Product2',
+                '01t': 'PricebookEntry',
+                '00k': 'Attachment',
+                '015': 'ContentVersion',
+                '068': 'ContentDocument'
+            };
+            obj = prefixMap[prefix] || 'SObject';
+        }
+
+        // Select appropriate fields based on object type
+        let fields = ['Id', 'Name'];
+        const fieldMap = {
+            'Account': ['Id', 'Name', 'Industry', 'Website', 'Phone'],
+            'Contact': ['Id', 'Name', 'Email', 'Phone', 'AccountId'],
+            'Opportunity': ['Id', 'Name', 'StageName', 'Amount', 'CloseDate'],
+            'Lead': ['Id', 'Name', 'Email', 'Company', 'Status'],
+            'Case': ['Id', 'CaseNumber', 'Subject', 'Status', 'Priority'],
+            'User': ['Id', 'Name', 'Email', 'Username', 'IsActive'],
+            'Campaign': ['Id', 'Name', 'Status', 'Type', 'StartDate']
+        };
+        fields = fieldMap[obj] || ['Id', 'Name'];
 
         const soql = `SELECT ${fields.join(', ')} FROM ${obj} WHERE Id='${recordId}'`;
 
@@ -146,5 +188,13 @@
     function escapeHtml(s) {
         return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     }
+
+    // in content-script.js — helper to get object name from lightning URL
+    function detectLightningObjectName(url) {
+        // e.g. https://instance.lightning.force.com/lightning/r/Account/001xxx/view
+        const m = url.match(/lightning\/r\/([^\/]+)\/[a-zA-Z0-9]{15,18}/);
+        return m ? m[1] : null;
+    }
+
 
 })();
