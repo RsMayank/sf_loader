@@ -7,11 +7,106 @@
     <title>SF Loader — SOQL</title>
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <link rel="stylesheet" href="assets/styles.css" />
+    <style>
+        .auth-section {
+            padding: 12px;
+            background: #f0f8ff;
+            border: 1px solid #0A66C2;
+            border-radius: 6px;
+            margin-bottom: 15px;
+        }
+
+        .auth-status {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        .status-dot.connected {
+            background: #28a745;
+        }
+
+        .status-dot.disconnected {
+            background: #dc3545;
+        }
+
+        .token-input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            margin-top: 8px;
+            box-sizing: border-box;
+        }
+
+        .instance-input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 13px;
+            margin-top: 8px;
+            box-sizing: border-box;
+        }
+
+        .help-link {
+            font-size: 11px;
+            color: #0A66C2;
+            text-decoration: none;
+            margin-top: 8px;
+            display: inline-block;
+        }
+
+        .help-link:hover {
+            text-decoration: underline;
+        }
+    </style>
 </head>
 
 <body>
     <div class="popup-root">
         <h3>SF Loader</h3>
+
+        <!-- Authentication Section -->
+        <div class="auth-section">
+            <div class="auth-status">
+                <div class="status-indicator">
+                    <div class="status-dot disconnected" id="status-dot"></div>
+                    <span id="status-text">Not Connected</span>
+                </div>
+                <button id="generate-token-btn" class="inspector-btn" style="font-size: 12px; padding: 6px 12px;">
+                    Generate Token
+                </button>
+            </div>
+            <div id="token-section" style="display: none;">
+                <label for="instance-url" style="font-size: 12px; font-weight: 600;">Instance URL:</label>
+                <input type="text" id="instance-url" class="instance-input"
+                    placeholder="https://yourinstance.salesforce.com">
+                <label for="access-token"
+                    style="font-size: 12px; font-weight: 600; margin-top: 8px; display: block;">Access Token:</label>
+                <input type="password" id="access-token" class="token-input" placeholder="Paste your access token here">
+                <button id="save-token-btn" class="inspector-btn"
+                    style="margin-top: 8px; font-size: 12px; padding: 6px 12px;">
+                    Save Token
+                </button>
+                <a href="#" id="show-instructions" class="help-link">How to get an access token?</a>
+            </div>
+        </div>
 
         <label for="soql">SOQL (example: <code>SELECT Id, Name FROM Account LIMIT 10</code>)</label>
         <textarea id="soql" placeholder="Write your SOQL here"
