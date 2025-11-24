@@ -1,27 +1,26 @@
-// popup.js - Opens the full inspector interface
+// popup.js - Simple popup that shows status and opens full inspector
 
-document.addEventListener('DOMContentLoaded', () => {
-    const openInspectorBtn = document.getElementById('open-inspector');
+document.addEventListener('DOMContentLoaded', async () => {
     const statusDot = document.getElementById('status-dot');
     const statusText = document.getElementById('status-text');
+    const openInspectorBtn = document.getElementById('open-inspector');
 
-    // Check connection status
-    (async function checkStatus() {
-        const data = await chrome.storage.local.get(['sessionId', 'instanceUrl', 'accessToken', 'sessionDetectedAt']);
+    // Check if session is detected
+    const data = await chrome.storage.local.get(['sessionId', 'instanceUrl', 'sessionDetectedAt']);
+    const twoHours = 2 * 60 * 60 * 1000;
+    const isRecentSession = data.sessionDetectedAt && (Date.now() - data.sessionDetectedAt) < twoHours;
 
-        const twoHours = 2 * 60 * 60 * 1000;
-        const isRecentSession = data.sessionDetectedAt && (Date.now() - data.sessionDetectedAt) < twoHours;
+    if (data.sessionId && data.instanceUrl && isRecentSession) {
+        // Session detected
+        statusDot.classList.add('connected');
+        statusText.textContent = 'Session Detected';
+    } else {
+        // No session
+        statusDot.classList.remove('connected');
+        statusText.textContent = 'No Session';
+    }
 
-        if ((data.sessionId && data.instanceUrl && isRecentSession) || (data.accessToken && data.instanceUrl)) {
-            statusDot.classList.add('connected');
-            statusText.textContent = 'Connected';
-        } else {
-            statusDot.classList.remove('connected');
-            statusText.textContent = 'Not Connected';
-        }
-    })();
-
-    // Open inspector in new tab
+    // Open full inspector in new tab
     openInspectorBtn.addEventListener('click', () => {
         chrome.tabs.create({
             url: chrome.runtime.getURL('inspector.html')
