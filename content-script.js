@@ -196,5 +196,57 @@
         return m ? m[1] : null;
     }
 
+    // Extract session ID from page context (like Salesforce Inspector does)
+    function extractSessionId() {
+        // Try multiple methods to get session ID
+
+        // Method 1: From global variables (Lightning/Classic)
+        try {
+            // Lightning Experience
+            if (window.$Api && window.$Api.getClient) {
+                const sessionId = window.$Api.getClient().getSessionId();
+                if (sessionId) return sessionId;
+            }
+        } catch (e) { /* ignore */ }
+
+        try {
+            // Classic UI
+            if (window.sforce && window.sforce.connection && window.sforce.connection.sessionId) {
+                return window.sforce.connection.sessionId;
+            }
+        } catch (e) { /* ignore */ }
+
+        try {
+            // Visualforce pages
+            if (window.UserContext && window.UserContext.sessionId) {
+                return window.UserContext.sessionId;
+            }
+        } catch (e) { /* ignore */ }
+
+        try {
+            // Another Lightning method
+            if (window.Sfdc && window.Sfdc.canvas && window.Sfdc.canvas.client) {
+                const token = window.Sfdc.canvas.client.token();
+                if (token) return token;
+            }
+        } catch (e) { /* ignore */ }
+
+        return null;
+    }
+
+    // Send session info to background when page loads
+    (function detectAndSendSession() {
+        const sessionId = extractSessionId();
+        if (sessionId) {
+            const instanceUrl = window.location.origin;
+            // Store session info
+            chrome.storage.local.set({
+                sessionId: sessionId,
+                instanceUrl: instanceUrl,
+                sessionDetectedAt: Date.now()
+            });
+            console.log('SF Loader: Session detected and saved');
+        }
+    })();
 
 })();

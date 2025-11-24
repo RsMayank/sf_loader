@@ -19,23 +19,35 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Load saved token on startup
     (async function init() {
-        const data = await chrome.storage.local.get(['accessToken', 'instanceUrl']);
-        if (data.accessToken && data.instanceUrl) {
+        // First, try to get auto-detected session from content script
+        const data = await chrome.storage.local.get(['sessionId', 'instanceUrl', 'accessToken', 'sessionDetectedAt']);
+
+        // Prefer auto-detected session (from content script) if recent (within 2 hours)
+        const twoHours = 2 * 60 * 60 * 1000;
+        const isRecentSession = data.sessionDetectedAt && (Date.now() - data.sessionDetectedAt) < twoHours;
+
+        if (data.sessionId && data.instanceUrl && isRecentSession) {
+            currentToken = data.sessionId;
+            currentInstance = data.instanceUrl;
+            updateStatus(true, 'Auto-detected');
+            resultsEl.innerHTML = '<div class="muted">✓ Session auto-detected from Salesforce page. Ready to run SOQL queries.</div>';
+        } else if (data.accessToken && data.instanceUrl) {
+            // Fallback to manually entered token
             currentToken = data.accessToken;
             currentInstance = data.instanceUrl;
-            updateStatus(true);
-            resultsEl.innerHTML = '<div class="muted">✓ Connected. Ready to run SOQL queries.</div>';
+            updateStatus(true, 'Manual Token');
+            resultsEl.innerHTML = '<div class="muted">✓ Connected with saved token. Ready to run SOQL queries.</div>';
         } else {
             updateStatus(false);
-            resultsEl.innerHTML = '<div class="muted">Click "Generate Token" to get started.</div>';
+            resultsEl.innerHTML = '<div class="muted">Please navigate to a Salesforce page, or click "Generate Token" to enter manually.</div>';
         }
     })();
 
     // Update connection status
-    function updateStatus(connected) {
+    function updateStatus(connected, method = '') {
         if (connected) {
             statusDot.className = 'status-dot connected';
-            statusText.textContent = 'Connected';
+            statusText.textContent = method ? `Connected (${method})` : 'Connected';
             generateTokenBtn.textContent = 'Disconnect';
         } else {
             statusDot.className = 'status-dot disconnected';
@@ -49,12 +61,12 @@ document.addEventListener('DOMContentLoaded', () => {
         if (currentToken) {
             // Disconnect
             if (confirm('Are you sure you want to disconnect?')) {
-                await chrome.storage.local.remove(['accessToken', 'instanceUrl']);
+                await chrome.storage.local.remove(['accessToken', 'instanceUrl', 'sessionId', 'sessionDetectedAt']);
                 currentToken = null;
                 currentInstance = null;
                 updateStatus(false);
                 tokenSection.style.display = 'none';
-                resultsEl.innerHTML = '<div class="muted">Disconnected. Click "Generate Token" to reconnect.</div>';
+                resultsEl.innerHTML = '<div class="muted">Disconnected. Navigate to a Salesforce page or click "Generate Token" to reconnect.</div>';
             }
         } else {
             // Show token input section
