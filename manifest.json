@@ -1,8 +1,8 @@
 {
     "manifest_version": 3,
-    "name": "Salesforce Inspector (OAuth)",
+    "name": "SF Loader",
     "version": "0.2.0",
-    "description": "Inspect Salesforce records, run SOQL queries, and export data with OAuth authentication",
+    "description": "Load, inspect, and export Salesforce data with ease. Run SOQL queries and download results as CSV.",
     "permissions": [
         "storage",
         "activeTab",

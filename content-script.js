@@ -14,7 +14,7 @@
     // create floating button
     const btn = document.createElement('button');
     btn.id = 'sf-inspector-btn';
-    btn.textContent = 'Inspector';
+    btn.textContent = 'SF Loader';
     Object.assign(btn.style, {
         position: 'fixed',
         right: '12px',
@@ -29,7 +29,7 @@
         cursor: 'pointer',
         fontSize: '13px',
     });
-    btn.title = 'Open Salesforce Inspector';
+    btn.title = 'Open SF Loader';
 
     document.body.appendChild(btn);
     btn.addEventListener('click', openOverlay);
@@ -60,7 +60,7 @@
         overlay.id = 'sf-inspector-overlay';
         overlay.innerHTML = `
       <div class="inspector-header">
-        <strong>Salesforce Inspector</strong>
+        <strong>SF Loader</strong>
         <div>
           <button id="inspector-refresh" class="inspector-small-btn">Refresh</button>
           <button id="inspector-close" class="inspector-small-btn">✕</button>
