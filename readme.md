@@ -1,89 +1,101 @@
-salesforce-inspector/
-├── manifest.json
-├── README.md           ← (this file)
-├── icons/
-├── background.js       ← service worker (handles REST requests + downloads)
-├── content-script.js   ← injects button, overlay, detects record id
-├── popup.html
-├── popup.js            ← SOQL editor + results + CSV export
-├── options.html
-├── options.js
-├── assets/styles.css
-└── docs/dev-notes.md
+# SF Loader
+
+A powerful Chrome/Edge extension for Salesforce developers and admins. Inspect records, run SOQL queries, and export data with ease.
+
+## ✨ Key Features
+
+### 🔄 **Automatic Session Detection**
+- **Zero configuration required!** Just browse Salesforce normally
+- Automatically detects and uses your active Salesforce session
+- No need to manually generate tokens or configure OAuth
+- Works seamlessly with Lightning Experience and Classic UI
+
+### 🔍 **Record Inspector**
+- Floating button on Salesforce record pages
+- Automatically detects record ID and object type
+- Shows key field values in a clean overlay
+- **Show All Data**: One-click access to view all fields for a record
+- Supports 20+ standard objects + custom objects
+
+### 📊 **SOQL Query Editor**
+- Run SOQL queries directly from the browser
+- View results in a formatted table
+- Export results to CSV with one click
+- Field suggestions and autocomplete
+
+### 📥 **CSV Export**
+- Export query results to CSV instantly
+- Proper escaping and formatting
+- Download directly to your computer
+
+## 🚀 Quick Start
+
+### Installation
+
+1. Open Chrome/Edge and navigate to `chrome://extensions/`
+2. Enable **Developer mode** (top-right toggle)
+3. Click **Load unpacked**
+4. Select the `sf_loader` folder
+5. The extension icon should appear in your toolbar
+
+### Usage
+1. **Navigate to any Salesforce record page**
+2. **Look for the floating rocket icon (🚀)** in the bottom right corner
+3. **Click the icon** to open the quick inspector overlay
+   - View key fields instantly
+   - Click **"Open Inspector"** to open the full query interface
+   - Click **"Show All Data"** to view all fields for the current record
+4. **Or click the extension icon** in the browser toolbar to open the Inspector directly
+
+See [Inspector Interface Guide](./docs/inspector-interface-guide.md) for detailed usage.
+
+## 📁 Project Structure
+
+```
+sf_loader/
+├── manifest.json          # Extension configuration
+├── README.md              # This file
+├── icons/                 # Extension icons
+├── background.js          # Service worker (handles API requests)
+├── content-script.js      # Injects inspector button, auto-detects session
+├── popup.html             # Small popup UI
+├── popup.js               # Opens inspector in new tab
+├── inspector.html         # Full-page SOQL inspector interface
+├── inspector.js           # Inspector logic (authorization, queries, export)
+├── options.html           # Settings page
+├── options.js             # Settings logic
+├── assets/
+│   └── styles.css         # Styling for inspector overlay
+└── docs/
+    ├── auto-session-detection.md    # Auto-detection guide
+    ├── inspector-interface-guide.md # Full inspector guide
+    └── oauth-setup-guide.md         # Manual token setup guide
+```
+
+## 🛠️ Requirements
+
+- **Browser**: Chrome or Edge (desktop)
+- **Salesforce**: Any Salesforce org where you're logged in
+- **No server required**: Uses browser session cookies
+
+## 📖 Documentation
+
+- [Automatic Session Detection](./docs/auto-session-detection.md) - How auto-detection works
+- [OAuth Setup Guide](./docs/oauth-setup-guide.md) - Manual token configuration
+
+## 🎯 Supported Objects
+
+Account, Contact, User, Opportunity, Lead, Case, Contract, Campaign, Group, Organization, Profile, PermissionSet, RecordType, Task, Event, Note, Report, Folder, Dashboard, CustomField, Pricebook2, Product2, PricebookEntry, Attachment, ContentVersion, ContentDocument, and all custom objects.
+
+## 🔒 Privacy & Security
+
+- All session tokens are stored **locally** in your browser
+- Never sent to external servers
+- Only communicates with **your** Salesforce instance
+- Uses Salesforce REST API v62.0
+
+## 📝 License
+
+MIT License - Feel free to use and modify!
 
 
-Requirements
-
-Chrome or Edge (desktop). MV3 extensions use the service worker model.
-
-A Salesforce org (Developer org or sandbox) where you are logged in in the browser (for development/testing).
-
-No server or connected app required for this starter — the extension uses the browser session cookies to call Salesforce REST endpoints.
-
-Quick install (load unpacked)
-
-Open Chrome and go to chrome://extensions/
-
-Enable Developer mode (top-right).
-
-Click Load unpacked and select the salesforce-inspector/ folder.
-
-You should see the extension icon appear in the toolbar.
-
-Quick test (on a Salesforce record page)
-
-Log in to your Salesforce dev org in the same browser profile you used to install the extension.
-
-Open any record page (Account, Contact, etc.). URL should contain the 15/18-character record id.
-
-Click the Inspector floating button (bottom-right).
-
-An overlay will open and try to detect the record id and load a small set of fields.
-
-Click the extension icon in the browser toolbar to open the popup.
-
-Run the default SOQL: SELECT Id, Name FROM Account LIMIT 10 (or edit and run your own).
-
-Results should appear in the popup; click Export CSV to download the results.
-
-Files you’ll edit first
-
-manifest.json — hosts, permissions, and entry points. Add/remove host permissions if needed.
-
-assets/styles.css — tweak UI look & feel.
-
-content-script.js — change record detection heuristics and which fields to fetch for quick display.
-
-background.js — change API version (default v56.0) or add new message handlers (e.g., bulk export).
-
-popup.js — change result rendering, add pagination, or switch to Bulk API for big exports.
-
-Developer tips & troubleshooting
-
-If SOQL returns no_tab_url or the popup says “No response”, make sure:
-
-You loaded the extension unpacked and it’s enabled.
-
-You are testing on a Salesforce page where you are logged in.
-
-host_permissions in manifest.json include your instance domain (*.salesforce.com or a custom domain).
-
-Check logs:
-
-Open the page where content-script runs → DevTools Console (to see injected script logs).
-
-Go to chrome://extensions/ → find the extension → click Service worker (Inspect) to view background.js logs.
-
-If fetch returns HTTP errors, copy the request URL and try it in DevTools Network tab to inspect response and headers.
-
-CSP: avoid injecting remote scripts into Salesforce pages — keep UI contained and static to reduce breakage risk.
-
-Security & best practices
-
-This starter uses the logged-in session (cookies) to call the REST API. That means:
-
-The extension performs actions with the same permissions as the logged-in user.
-
-Do not ship code that sends org data to external servers without explicit user consent.
-
-For distribution or multi-org use, implement OAuth (PKCE) and a secure token exchange flow — this starter intentionally omits OAuth for faster local development.

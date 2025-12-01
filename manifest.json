@@ -1,36 +1,45 @@
 {
     "manifest_version": 3,
-    "name": "Salesforce Inspector (Session)",
-    "version": "0.1.0",
-    "description": "Inspector that uses logged-in Salesforce session (no OAuth).",
-    "icons": {
-        "16": "icons/icon16.png",
-        "48": "icons/icon48.png"
-    },
+    "name": "SF Loader",
+    "version": "0.3.0",
+    "description": "Load, inspect, and export Salesforce data with ease. Run SOQL queries and download results as CSV.",
     "permissions": [
         "storage",
+        "activeTab",
         "scripting",
         "downloads",
-        "activeTab"
+        "identity",
+        "tabs"
     ],
     "host_permissions": [
         "https://*.salesforce.com/*",
         "https://*.my.salesforce.com/*",
-        "https://login.salesforce.com/*",
-        "https://test.salesforce.com/*"
+        "https://*.force.com/*",
+        "https://*.lightning.force.com/*"
     ],
     "background": {
         "service_worker": "background.js"
     },
     "action": {
         "default_popup": "popup.html",
-        "default_icon": "icons/icon48.png"
+        "default_icon": {
+            "16": "icons/icon16.png",
+            "48": "icons/icon48.png"
+        }
+    },
+    "icons": {
+        "16": "icons/icon16.png",
+        "48": "icons/icon48.png"
     },
     "content_scripts": [
         {
             "matches": [
                 "https://*.salesforce.com/*",
-                "https://*.my.salesforce.com/*"
+                "https://*.my.salesforce.com/*",
+                "https://*.force.com/*",
+                "https://*.lightning.force.com/*",
+                "https://login.salesforce.com/*",
+                "https://test.salesforce.com/*"
             ],
             "js": [
                 "content-script.js"
@@ -38,5 +47,19 @@
             "run_at": "document_idle"
         }
     ],
-    "options_page": "options.html"
+    "options_page": "options.html",
+    "web_accessible_resources": [
+        {
+            "resources": [
+                "assets/styles.css",
+                "inject.js"
+            ],
+            "matches": [
+                "https://*.salesforce.com/*",
+                "https://*.my.salesforce.com/*",
+                "https://*.force.com/*",
+                "https://*.lightning.force.com/*"
+            ]
+        }
+    ]
 }

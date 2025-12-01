@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SF Loader - SOQL Inspector</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            border-radius: 12px;
+            padding: 20px 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            color: #2d3748;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 16px;
+            border-radius: 8px;
+            background: #f7fafc;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #fc8181;
+        }
+
+        .status-dot.connected {
+            background: #48bb78;
+        }
+
+        .status-text {
+            font-size: 14px;
+            color: #4a5568;
+            font-weight: 500;
+        }
+
+        .main-content {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .auth-section {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .auth-section h2 {
+            font-size: 28px;
+            color: #2d3748;
+            margin-bottom: 16px;
+        }
+
+        .auth-section p {
+            font-size: 16px;
+            color: #718096;
+            margin-bottom: 30px;
+        }
+
+        .auth-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 14px 32px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .auth-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .auth-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .query-section {
+            display: none;
+        }
+
+        .query-section.active {
+            display: block;
+        }
+
+        .record-view-section {
+            display: none;
+        }
+
+        .record-view-section.active {
+            display: block;
+        }
+
+        .query-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .query-header h2 {
+            font-size: 20px;
+            color: #2d3748;
+        }
+
+        .query-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5a67d8;
+        }
+
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #4a5568;
+        }
+
+        .btn-secondary:hover {
+            background: #cbd5e0;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .query-editor {
+            margin-bottom: 20px;
+        }
+
+        .query-editor textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            resize: vertical;
+            transition: border-color 0.2s;
+        }
+
+        .query-editor textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .results-section {
+            margin-top: 20px;
+        }
+
+        .results-info {
+            padding: 12px 16px;
+            background: #f7fafc;
+            border-radius: 6px;
+            margin-bottom: 16px;
+            font-size: 14px;
+            color: #4a5568;
+        }
+
+        .results-table-container {
+            overflow-x: auto;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+        }
+
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .results-table th {
+            background: #f7fafc;
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 600;
+            color: #2d3748;
+            border-bottom: 2px solid #e2e8f0;
+            position: sticky;
+            top: 0;
+        }
+
+        .results-table td {
+            padding: 12px 16px;
+            border-bottom: 1px solid #e2e8f0;
+            color: #4a5568;
+        }
+
+        .results-table tr:hover {
+            background: #f7fafc;
+        }
+
+        .error-message {
+            padding: 16px;
+            background: #fff5f5;
+            border-left: 4px solid #fc8181;
+            border-radius: 6px;
+            color: #c53030;
+            margin-top: 16px;
+        }
+
+        .success-message {
+            padding: 16px;
+            background: #f0fff4;
+            border-left: 4px solid #48bb78;
+            border-radius: 6px;
+            color: #22543d;
+            margin-top: 16px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #718096;
+        }
+
+        .spinner {
+            border: 3px solid #e2e8f0;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 16px;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .instance-info {
+            font-size: 12px;
+            color: #718096;
+            margin-top: 4px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <div>
+                <h1>
+                    <span>🚀</span>
+                    SF Loader - SOQL Inspector
+                </h1>
+                <div class="instance-info" id="instance-info"></div>
+            </div>
+            <div class="status">
+                <div class="status-dot" id="status-dot"></div>
+                <span class="status-text" id="status-text">Not Connected</span>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <!-- Authorization Section -->
+            <div class="auth-section" id="auth-section">
+                <h2>🔐 Authorization Required</h2>
+                <p>Click the button below to authorize SF Loader and start querying your Salesforce data.</p>
+                <button class="auth-btn" id="authorize-btn">
+                    Authorize & Connect to Salesforce
+                </button>
+                <p style="margin-top: 20px; font-size: 14px; color: #a0aec0;">
+                    This will automatically detect your Salesforce session from any open Salesforce tab.
+                </p>
+            </div>
+
+            <!-- Query Section -->
+            <div class="query-section" id="query-section">
+                <div class="query-header">
+                    <h2>SOQL Query Editor</h2>
+                    <div class="query-actions">
+                        <button class="btn btn-secondary" id="clear-btn">Clear</button>
+                        <button class="btn btn-secondary" id="export-btn">Export CSV</button>
+                        <button class="btn btn-primary" id="run-btn">Run Query</button>
+                    </div>
+                </div>
+
+                <div class="query-editor">
+                    <textarea id="soql-input" placeholder="Enter your SOQL query here...
+Example: SELECT Id, Name, Email FROM Contact LIMIT 10">SELECT Id, Name FROM Account LIMIT 10</textarea>
+                </div>
+
+                <div class="results-section" id="results-section">
+                    <div class="results-info">
+                        Enter a SOQL query and click "Run Query" to see results.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Record View Section (Show All Data) -->
+            <div class="record-view-section" id="record-view-section">
+                <div class="query-header">
+                    <h2 id="record-view-title">Object Name</h2>
+                    <div class="query-actions">
+                        <button class="btn btn-secondary" id="record-export-btn">Export CSV</button>
+                        <button class="btn btn-primary" id="switch-to-query-btn">Switch to Query Editor</button>
+                    </div>
+                </div>
+
+                <div class="record-controls"
+                    style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+                    <div style="position: relative;">
+                        <input type="text" id="record-search" placeholder="Search fields..."
+                            style="padding: 10px 16px; border: 2px solid #e2e8f0; border-radius: 8px; width: 300px; font-size: 14px; outline: none; transition: border-color 0.2s;">
+                    </div>
+                    <div id="record-field-count" style="color: #718096; font-size: 14px; font-weight: 500;"></div>
+                </div>
+
+                <div id="record-view-content">
+                    <!-- Table will be injected here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="inspector.js"></script>
+</body>
+
+</html>

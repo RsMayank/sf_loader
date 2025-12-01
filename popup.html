@@ -1,27 +1,126 @@
-<!-- popup.html -->
-<!doctype html>
-<html>
+<!DOCTYPE html>
+<html lang="en">
 
 <head>
-    <meta charset="utf-8" />
-    <title>Salesforce Inspector — SOQL</title>
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <link rel="stylesheet" href="assets/styles.css" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SF Loader</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            width: 320px;
+            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .container {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            font-size: 20px;
+            color: #2d3748;
+            margin-bottom: 8px;
+        }
+
+        .status {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 8px 12px;
+            background: #f7fafc;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #fc8181;
+        }
+
+        .status-dot.connected {
+            background: #48bb78;
+        }
+
+        .status-text {
+            font-size: 13px;
+            color: #4a5568;
+            font-weight: 500;
+        }
+
+        .main-btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .main-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .info {
+            margin-top: 16px;
+            padding: 12px;
+            background: #f7fafc;
+            border-radius: 6px;
+            font-size: 12px;
+            color: #718096;
+            line-height: 1.5;
+        }
+
+        .info strong {
+            color: #2d3748;
+            display: block;
+            margin-bottom: 4px;
+        }
+    </style>
 </head>
 
 <body>
-    <div class="popup-root">
-        <h3>Salesforce Inspector</h3>
-
-        <label for="soql">SOQL (example: <code>SELECT Id, Name FROM Account LIMIT 10</code>)</label>
-        <textarea id="soql" placeholder="Write your SOQL here"
-            spellcheck="false">SELECT Id, Name FROM Account LIMIT 10</textarea>
-        <div class="popup-actions">
-            <button id="run-soql" class="inspector-btn">Run</button>
-            <button id="export-csv" class="inspector-btn">Export CSV</button>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 SF Loader</h1>
         </div>
 
-        <div id="results" class="results"></div>
+        <div class="status">
+            <div class="status-dot" id="status-dot"></div>
+            <span class="status-text" id="status-text">Checking...</span>
+        </div>
+
+        <button class="main-btn" id="open-inspector">
+            Open SOQL Inspector
+        </button>
+
+        <div class="info">
+            <strong>How it works:</strong>
+            Click the button above to open the full SOQL Inspector interface. If you're logged into Salesforce, your
+            session will be automatically detected!
+        </div>
     </div>
 
     <script src="popup.js"></script>

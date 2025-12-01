@@ -1,0 +1,207 @@
+font-family: Arial, sans-serif;
+}
+
+.section {
+margin-bottom: 30px;
+padding: 20px;
+border: 1px solid #e8e8e8;
+border-radius: 8px;
+background: #fafafa;
+}
+
+.section h2 {
+margin-top: 0;
+color: #0A66C2;
+}
+
+.org-list {
+margin-top: 15px;
+}
+
+.org-item {
+display: flex;
+justify-content: space-between;
+align-items: center;
+padding: 12px;
+margin-bottom: 10px;
+background: white;
+border: 1px solid #ddd;
+border-radius: 6px;
+}
+
+.org-info {
+flex: 1;
+}
+
+.org-name {
+font-weight: 600;
+color: #333;
+}
+
+.org-url {
+font-size: 12px;
+color: #666;
+margin-top: 4px;
+}
+
+.org-actions {
+display: flex;
+gap: 8px;
+}
+
+.btn {
+padding: 8px 16px;
+border: none;
+border-radius: 6px;
+cursor: pointer;
+font-size: 13px;
+transition: background 0.2s;
+}
+
+.btn-primary {
+background: #0A66C2;
+color: white;
+}
+
+.btn-primary:hover {
+background: #084d94;
+}
+
+.btn-danger {
+background: #dc3545;
+color: white;
+}
+
+.btn-danger:hover {
+background: #c82333;
+}
+
+.btn-secondary {
+background: #6c757d;
+color: white;
+}
+
+.btn-secondary:hover {
+background: #5a6268;
+}
+
+.input-group {
+margin-bottom: 15px;
+}
+
+.input-group label {
+display: block;
+margin-bottom: 5px;
+font-weight: 600;
+color: #333;
+}
+
+.input-group input,
+.input-group select {
+width: 100%;
+padding: 10px;
+border: 1px solid #ccc;
+border-radius: 6px;
+font-size: 14px;
+box-sizing: border-box;
+}
+
+.status-message {
+padding: 12px;
+margin-top: 15px;
+border-radius: 6px;
+display: none;
+}
+
+.status-message.success {
+background: #d4edda;
+color: #155724;
+border: 1px solid #c3e6cb;
+}
+
+.status-message.error {
+background: #f8d7da;
+color: #721c24;
+border: 1px solid #f5c6cb;
+}
+
+.help-text {
+font-size: 12px;
+color: #666;
+margin-top: 5px;
+}
+
+.token-display {
+background: #f7f7f7;
+padding: 10px;
+border-radius: 6px;
+font-family: monospace;
+font-size: 12px;
+word-break: break-all;
+<input type="text" id="org-name" placeholder="e.g., Production, Sandbox, Dev Org">
+<div class="help-text">A friendly name to identify this org</div>
+</div>
+<div class="input-group">
+    <label for="org-url">Instance URL</label>
+    <input type="text" id="org-url" placeholder="e.g., https://yourinstance.salesforce.com">
+    <div class="help-text">Your Salesforce instance URL</div>
+</div>
+<div class="input-group">
+    <label for="org-type">Org Type</label>
+    <select id="org-type">
+        <option value="production">Production</option>
+        <option value="sandbox">Sandbox</option>
+        <option value="developer">Developer Edition</option>
+    </select>
+</div>
+<button id="add-org-btn" class="btn btn-primary">Add Organization</button>
+<div id="add-status" class="status-message"></div>
+</div>
+
+<!-- Saved Orgs Section -->
+<div class="section">
+    <h2>Saved Organizations</h2>
+    <div id="org-list" class="org-list">
+        <p class="help-text">No organizations saved yet. Add one above to get started.</p>
+    </div>
+</div>
+
+<!-- OAuth Settings Section -->
+<div class="section">
+    <h2>OAuth Configuration</h2>
+    <div class="input-group">
+        <label for="client-id">Connected App Client ID</label>
+        <input type="text" id="client-id" placeholder="Enter your Connected App Client ID">
+        <div class="help-text">Optional: Use your own Connected App for OAuth authentication</div>
+    </div>
+    <div class="input-group">
+        <label for="redirect-uri">Redirect URI</label>
+        <input type="text" id="redirect-uri" readonly>
+        <div class="help-text">Use this URL in your Connected App's redirect URIs</div>
+    </div>
+    <button id="save-oauth-btn" class="btn btn-secondary">Save OAuth Settings</button>
+    <div id="oauth-status" class="status-message"></div>
+</div>
+
+<!-- API Settings Section -->
+<div class="section">
+    <h2>API Settings</h2>
+    <div class="input-group">
+        <label for="api-version">Salesforce API Version</label>
+        <select id="api-version">
+            <option value="v62.0">v62.0 (Winter '25)</option>
+            <option value="v61.0">v61.0 (Summer '24)</option>
+            <option value="v60.0">v60.0 (Spring '24)</option>
+            <option value="v59.0">v59.0 (Winter '24)</option>
+            <option value="v58.0">v58.0 (Summer '23)</option>
+        </select>
+    </div>
+    <button id="save-api-btn" class="btn btn-secondary">Save API Settings</button>
+    <div id="api-status" class="status-message"></div>
+</div>
+</div>
+
+<script src="options.js"></script>
+</body>
+
+</html>
