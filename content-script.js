@@ -1,11 +1,6 @@
 // content-script.js
 // Injects a floating "Inspector" button onto Salesforce pages, opens a small overlay,
 // detects recordId from URL, and asks the background service worker to run a SOQL query.
-//
-// Notes:
-// - This script runs in the page context (content script). It communicates with the
-//   background service worker using chrome.runtime.sendMessage.
-// - It uses a very small, isolated overlay to avoid interfering with Salesforce's UI.
 
 console.log('🚀 SF Loader: Content script loaded!', window.location.href);
 
@@ -94,18 +89,38 @@ console.log('🚀 SF Loader: Content script loaded!', window.location.href);
         Detecting context...
       </div>
       <div class="inspector-footer">
-        <button id="open-soql-panel" class="inspector-btn">Open SOQL Popup</button>
+        <button id="open-soql-panel" class="inspector-btn">Open Inspector</button>
+        <button id="show-all-data" class="inspector-btn" style="margin-top:8px; background: #48bb78;">Show All Data</button>
       </div>
     `;
         document.body.appendChild(overlay);
 
         overlay.querySelector('#inspector-close').addEventListener('click', () => overlay.remove());
         overlay.querySelector('#inspector-refresh').addEventListener('click', () => loadContext(overlay));
+
         overlay.querySelector('#open-soql-panel').addEventListener('click', () => {
-            // open extension popup by opening the extension action page — fallback: open chrome extension page
-            // Best-effort: open a new tab pointing to the extension popup html (works in dev; in release may be blocked)
-            const popupUrl = chrome.runtime.getURL('popup.html');
-            window.open(popupUrl, '_blank', 'noopener');
+            sendMessage({ type: 'OPEN_INSPECTOR' });
+        });
+
+        overlay.querySelector('#show-all-data').addEventListener('click', () => {
+            const rId = overlay.dataset.recordId;
+            const objName = overlay.dataset.objectName;
+
+            if (rId && objName) {
+                sendMessage({
+                    type: 'OPEN_INSPECTOR',
+                    params: {
+                        mode: 'showAllData',
+                        recordId: rId,
+                        object: objName
+                    }
+                });
+            } else {
+                const btn = overlay.querySelector('#show-all-data');
+                const originalText = btn.textContent;
+                btn.textContent = 'No Record/Object Found';
+                setTimeout(() => btn.textContent = originalText, 2000);
+            }
         });
 
         loadContext(overlay);
@@ -119,6 +134,9 @@ console.log('🚀 SF Loader: Content script loaded!', window.location.href);
         const recordId = findRecordId(location.href);
         if (!recordId) {
             body.innerHTML = '<div class="muted">No record id found in URL. Open an object record page and try again.</div>';
+            // Reset state
+            const btn = overlay.querySelector('#show-all-data');
+            if (btn) btn.dataset.ready = 'false';
             return;
         }
 
@@ -161,6 +179,10 @@ console.log('🚀 SF Loader: Content script loaded!', window.location.href);
             };
             obj = prefixMap[prefix] || 'SObject';
         }
+
+        // Store context in overlay dataset for buttons to use
+        overlay.dataset.recordId = recordId;
+        overlay.dataset.objectName = obj;
 
         // Select appropriate fields based on object type
         let fields = ['Id', 'Name'];
@@ -278,9 +300,28 @@ console.log('🚀 SF Loader: Content script loaded!', window.location.href);
     }
 
     // Re-inject on navigation (SPA)
+    // We use a polling interval to detect URL changes because popstate/hashchange
+    // aren't enough for all Salesforce Lightning navigations (pushState).
+    let lastUrl = location.href;
+    setInterval(() => {
+        if (location.href !== lastUrl) {
+            lastUrl = location.href;
+            console.log('SF Loader: URL changed to', lastUrl);
+
+            // If overlay is open, refresh it
+            const overlay = document.getElementById('sf-inspector-overlay');
+            if (overlay) {
+                loadContext(overlay);
+            }
+
+            // Re-inject script to ensure we have the latest session if it changed (unlikely but possible)
+            injectMainScript();
+        }
+    }, 1000);
+
     if (window.addEventListener) {
         window.addEventListener('popstate', () => {
-            console.log('SF Loader: Navigation detected, re-injecting script...');
+            console.log('SF Loader: Navigation detected (popstate), re-injecting script...');
             injectMainScript();
         });
     }

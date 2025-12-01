@@ -49,7 +49,7 @@ If auto-detection fails (rare cases):
 ## Benefits
 
 ✅ **Zero Configuration** - Just browse Salesforce normally  
-✅ **Seamless Experience** - No interruptions or manual steps  
+✅ **Seamless Experience** - No interruptions or
 ✅ **Always Fresh** - Automatically updates when you navigate  
 ✅ **Secure** - Session stored locally in browser only  
 ✅ **Fallback Available** - Manual token entry if needed  

@@ -180,5 +180,17 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         return true;
     }
 
+    // OPEN_INSPECTOR handler to open the full-page inspector
+    if (msg.type === 'OPEN_INSPECTOR') {
+        let url = 'inspector.html';
+        if (msg.params) {
+            const qs = new URLSearchParams(msg.params).toString();
+            url += `?${qs}`;
+        }
+        chrome.tabs.create({ url: url });
+        sendResponse({ ok: true });
+        return true;
+    }
+
     sendResponse({ ok: false, err: 'unknown_message_type' });
 });

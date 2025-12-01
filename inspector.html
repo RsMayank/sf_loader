@@ -124,6 +124,14 @@
             display: block;
         }
 
+        .record-view-section {
+            display: none;
+        }
+
+        .record-view-section.active {
+            display: block;
+        }
+
         .query-header {
             display: flex;
             justify-content: space-between;
@@ -341,6 +349,30 @@ Example: SELECT Id, Name, Email FROM Contact LIMIT 10">SELECT Id, Name FROM Acco
                     <div class="results-info">
                         Enter a SOQL query and click "Run Query" to see results.
                     </div>
+                </div>
+            </div>
+
+            <!-- Record View Section (Show All Data) -->
+            <div class="record-view-section" id="record-view-section">
+                <div class="query-header">
+                    <h2 id="record-view-title">Object Name</h2>
+                    <div class="query-actions">
+                        <button class="btn btn-secondary" id="record-export-btn">Export CSV</button>
+                        <button class="btn btn-primary" id="switch-to-query-btn">Switch to Query Editor</button>
+                    </div>
+                </div>
+
+                <div class="record-controls"
+                    style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+                    <div style="position: relative;">
+                        <input type="text" id="record-search" placeholder="Search fields..."
+                            style="padding: 10px 16px; border: 2px solid #e2e8f0; border-radius: 8px; width: 300px; font-size: 14px; outline: none; transition: border-color 0.2s;">
+                    </div>
+                    <div id="record-field-count" style="color: #718096; font-size: 14px; font-weight: 500;"></div>
+                </div>
+
+                <div id="record-view-content">
+                    <!-- Table will be injected here -->
                 </div>
             </div>
         </div>

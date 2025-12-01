@@ -3,6 +3,7 @@
 let currentToken = null;
 let currentInstance = null;
 let lastQueryResults = null;
+let currentRecordFields = []; // Array of { name, value, type }
 
 // DOM Elements
 const authSection = document.getElementById('auth-section');
@@ -20,7 +21,149 @@ const resultsSection = document.getElementById('results-section');
 // Initialize
 (async function init() {
     await checkAuthorization();
+
+    // Check for URL parameters (Show All Data mode)
+    const params = new URLSearchParams(window.location.search);
+    const mode = params.get('mode');
+    const recordId = params.get('recordId');
+    const objectName = params.get('object');
+
+    if (mode === 'showAllData' && recordId && objectName) {
+        // Wait a bit for connection to be established if needed
+        if (!currentToken) {
+            // If not connected yet, wait for the checkAuthorization to potentially find a session
+            // checkAuthorization is async but we awaited it. If it failed, we might need to wait or show error.
+            if (!currentToken) {
+                console.log('Not connected yet, cannot Show All Data immediately.');
+                return;
+            }
+        }
+
+        // Auto-run Show All Data
+        await performShowAllData(objectName, recordId);
+    }
 })();
+
+async function performShowAllData(objectName, recordId) {
+    // Switch to Record View
+    querySection.classList.remove('active');
+    const recordViewSection = document.getElementById('record-view-section');
+    recordViewSection.classList.add('active');
+
+    const recordViewTitle = document.getElementById('record-view-title');
+    const recordViewContent = document.getElementById('record-view-content');
+
+    // Clear search
+    document.getElementById('record-search').value = '';
+    document.getElementById('record-field-count').textContent = '';
+
+    recordViewTitle.textContent = `${objectName} - ${recordId}`;
+    recordViewContent.innerHTML = `
+        <div class="loading">
+            <div class="spinner"></div>
+            <div>Loading all fields for ${objectName}...</div>
+        </div>
+    `;
+
+    try {
+        const describeUrl = `${currentInstance}/services/data/v62.0/sobjects/${objectName}/describe`;
+        const describeRes = await fetch(describeUrl, {
+            headers: {
+                'Authorization': `Bearer ${currentToken}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (!describeRes.ok) {
+            throw new Error(`Describe failed: ${describeRes.status} ${describeRes.statusText}`);
+        }
+
+        const describeData = await describeRes.json();
+        const fields = describeData.fields.map(f => f.name).join(', ');
+
+        // Map field types
+        const fieldTypeMap = {};
+        describeData.fields.forEach(f => {
+            fieldTypeMap[f.name] = f.type;
+        });
+
+        const query = `SELECT ${fields} FROM ${objectName} WHERE Id = '${recordId}'`;
+
+        const queryUrl = `${currentInstance}/services/data/v62.0/query?q=${encodeURIComponent(query)}`;
+        const queryRes = await fetch(queryUrl, {
+            headers: {
+                'Authorization': `Bearer ${currentToken}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (!queryRes.ok) {
+            throw new Error(`Query failed: ${queryRes.status} ${queryRes.statusText}`);
+        }
+
+        const queryData = await queryRes.json();
+        const record = queryData.records[0];
+
+        if (!record) {
+            recordViewContent.innerHTML = '<div class="error-message">Record not found.</div>';
+            return;
+        }
+
+        // Store for export
+        lastQueryResults = queryData;
+
+        // Prepare data for rendering
+        currentRecordFields = Object.keys(record)
+            .filter(k => k !== 'attributes')
+            .sort()
+            .map(key => ({
+                name: key,
+                value: record[key],
+                type: fieldTypeMap[key] || 'unknown'
+            }));
+
+        renderRecordTable('');
+
+    } catch (error) {
+        recordViewContent.innerHTML = `<div class="error-message">Error: ${escapeHtml(error.message)}</div>`;
+    }
+}
+
+function renderRecordTable(filterText) {
+    const content = document.getElementById('record-view-content');
+    const countDiv = document.getElementById('record-field-count');
+
+    const lowerFilter = filterText.toLowerCase();
+    const filteredFields = currentRecordFields.filter(f =>
+        f.name.toLowerCase().includes(lowerFilter) ||
+        (f.value !== null && String(f.value).toLowerCase().includes(lowerFilter)) ||
+        f.type.toLowerCase().includes(lowerFilter)
+    );
+
+    countDiv.textContent = `Showing ${filteredFields.length} of ${currentRecordFields.length} fields`;
+
+    let html = '<div class="results-table-container">';
+    html += '<table class="results-table">';
+    html += '<thead><tr><th>Field</th><th>Value</th><th>Type</th></tr></thead>';
+    html += '<tbody>';
+
+    filteredFields.forEach(f => {
+        const displayValue = f.value !== null && f.value !== undefined ? String(f.value) : '';
+        html += `<tr>
+            <td><strong>${escapeHtml(f.name)}</strong></td>
+            <td>${escapeHtml(displayValue)}</td>
+            <td><span style="background: #edf2f7; padding: 2px 6px; border-radius: 4px; font-size: 12px; color: #4a5568;">${escapeHtml(f.type)}</span></td>
+        </tr>`;
+    });
+
+    html += '</tbody></table></div>';
+    content.innerHTML = html;
+}
+
+// Event listener for search
+document.getElementById('record-search').addEventListener('input', (e) => {
+    renderRecordTable(e.target.value);
+});
 
 // Check if already authorized
 async function checkAuthorization() {
@@ -279,6 +422,17 @@ exportBtn.addEventListener('click', async () => {
     } catch (error) {
         showError('Export failed: ' + error.message);
     }
+});
+
+// Event listeners for Record View buttons
+document.getElementById('switch-to-query-btn').addEventListener('click', () => {
+    document.getElementById('record-view-section').classList.remove('active');
+    querySection.classList.add('active');
+});
+
+document.getElementById('record-export-btn').addEventListener('click', () => {
+    // Reuse existing export logic
+    exportBtn.click();
 });
 
 // Display results

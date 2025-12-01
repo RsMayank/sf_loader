@@ -14,6 +14,7 @@ A powerful Chrome/Edge extension for Salesforce developers and admins. Inspect r
 - Floating button on Salesforce record pages
 - Automatically detects record ID and object type
 - Shows key field values in a clean overlay
+- **Show All Data**: One-click access to view all fields for a record
 - Supports 20+ standard objects + custom objects
 
 ### 📊 **SOQL Query Editor**
@@ -38,13 +39,13 @@ A powerful Chrome/Edge extension for Salesforce developers and admins. Inspect r
 5. The extension icon should appear in your toolbar
 
 ### Usage
-
-1. **Click the SF Loader extension icon** in your browser toolbar
-2. **Click "Open SOQL Inspector"** to open the full interface in a new tab
-3. **Click "Authorize & Connect to Salesforce"** 
-   - If you have a Salesforce tab open: Session is detected automatically!
-   - If not: Salesforce login page opens → Log in → Session detected automatically
-4. **Start querying!** Enter SOQL queries and export results to CSV
+1. **Navigate to any Salesforce record page**
+2. **Look for the floating rocket icon (🚀)** in the bottom right corner
+3. **Click the icon** to open the quick inspector overlay
+   - View key fields instantly
+   - Click **"Open Inspector"** to open the full query interface
+   - Click **"Show All Data"** to view all fields for the current record
+4. **Or click the extension icon** in the browser toolbar to open the Inspector directly
 
 See [Inspector Interface Guide](./docs/inspector-interface-guide.md) for detailed usage.
 
